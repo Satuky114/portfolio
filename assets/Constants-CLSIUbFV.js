@@ -1,0 +1,1 @@
+var e=`source-over`,t=`visibilitychange`,n=.5,r=1e3,i={x:0,y:0,z:0},a=`random`,o=Math.PI*2,s=.25;export{i as a,t as c,r as i,o as n,s as o,n as r,a as s,e as t};
