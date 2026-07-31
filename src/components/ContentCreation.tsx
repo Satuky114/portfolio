@@ -7,6 +7,7 @@ import { SectionWrapper } from "@/components/ui/SectionWrapper";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { asset } from "@/lib/utils";
 
 const STATS = [
   {
@@ -95,7 +96,7 @@ export function ContentCreation() {
             className="block relative aspect-video bg-bg-surface border-b border-border overflow-hidden group"
           >
             <img
-              src="/daozhonghua-cover.jpg"
+              src={asset("/daozhonghua-cover.jpg")}
               alt={locale === "zh" ? "道中华工作室视频截图" : "Dao Zhonghua Studio Video"}
               loading="lazy"
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"

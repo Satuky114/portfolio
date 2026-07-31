@@ -7,6 +7,7 @@ import { useI18n } from "@/app/[locale]/ClientIntlProvider";
 import { SectionWrapper } from "@/components/ui/SectionWrapper";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { asset } from "@/lib/utils";
 
 // ============================================================
 // Project data
@@ -149,7 +150,7 @@ function ProjectCard({
           {project.image ? (
             <div className={`relative rounded-2xl overflow-hidden border border-border/60 group-hover:border-border transition-colors duration-500 shadow-xl shadow-black/30 ${project.portrait ? "aspect-[3/4]" : "aspect-video"}`}>
               <img
-                src={project.image}
+                src={asset(project.image)}
                 alt={title}
                 loading="lazy"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"

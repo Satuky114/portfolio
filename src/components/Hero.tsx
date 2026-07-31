@@ -7,6 +7,7 @@ import { useI18n } from "@/app/[locale]/ClientIntlProvider";
 import { GlowOrb } from "@/components/ui/GlowOrb";
 import { GeometricFrame } from "@/components/ui/GeometricFrame";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { asset } from "@/lib/utils";
 
 export function Hero() {
   const { t, locale } = useI18n();
@@ -48,7 +49,7 @@ export function Hero() {
             {/* Photo frame */}
             <div className="w-56 h-56 md:w-80 md:h-80 rounded-3xl overflow-hidden border-2 border-border/60 shadow-2xl shadow-black/40">
               <img
-                src="/avatar.jpg"
+                src={asset("/avatar.jpg")}
                 alt={locale === "zh" ? "罗政皓" : "Luo Zhenghao"}
                 className="w-full h-full object-cover"
               />

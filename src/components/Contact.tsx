@@ -6,6 +6,7 @@ import { useI18n } from "@/app/[locale]/ClientIntlProvider";
 import { SectionWrapper } from "@/components/ui/SectionWrapper";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { asset } from "@/lib/utils";
 
 export function Contact() {
   const { t, locale } = useI18n();
@@ -69,7 +70,7 @@ export function Contact() {
 
         {/* Resume download */}
         <motion.a
-          href="/resume.pdf"
+          href={asset("/resume.pdf")}
           download
           initial={reduced ? {} : { opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
