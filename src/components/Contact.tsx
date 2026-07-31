@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Mail, Phone, Globe, FileText } from "lucide-react";
+import { Mail, Phone, Globe, FileText, MessageCircle } from "lucide-react";
 import { useI18n } from "@/app/[locale]/ClientIntlProvider";
 import { SectionWrapper } from "@/components/ui/SectionWrapper";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -31,6 +31,12 @@ export function Contact() {
       value: "satuky114",
       href: "https://github.com/satuky114",
     },
+    {
+      icon: <MessageCircle size={20} />,
+      label: t("contact.wechat"),
+      value: "lzh061104lzh",
+      href: null,
+    },
   ];
 
   return (
@@ -41,30 +47,48 @@ export function Contact() {
 
       <div className="max-w-2xl mx-auto">
         {/* Contact cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {contacts.map((item, i) => (
-            <motion.a
+            <motion.div
               key={i}
-              href={item.href}
-              target={item.href.startsWith("http") ? "_blank" : undefined}
-              rel="noopener noreferrer"
               initial={reduced ? {} : { opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               whileHover={{ y: -4, borderColor: "var(--accent)" }}
               transition={{ delay: i * 0.1, duration: 0.5 }}
-              className="flex flex-col items-center gap-2 p-5 rounded-xl border border-border bg-bg-surface hover:bg-bg-elevated transition-colors text-center group"
+              className="flex flex-col items-center gap-2 p-5 rounded-xl border border-border bg-bg-surface hover:bg-bg-elevated transition-colors text-center group cursor-default"
             >
-              <span className="text-text-tertiary group-hover:text-accent transition-colors">
-                {item.icon}
-              </span>
-              <span className="text-xs font-mono text-text-tertiary uppercase tracking-wider">
-                {item.label}
-              </span>
-              <span className="text-sm font-medium text-text-primary break-all">
-                {item.value}
-              </span>
-            </motion.a>
+              {item.href ? (
+                <a
+                  href={item.href}
+                  target={item.href.startsWith("http") ? "_blank" : undefined}
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-2 w-full"
+                >
+                  <span className="text-text-tertiary group-hover:text-accent transition-colors">
+                    {item.icon}
+                  </span>
+                  <span className="text-xs font-mono text-text-tertiary uppercase tracking-wider">
+                    {item.label}
+                  </span>
+                  <span className="text-sm font-medium text-text-primary break-all">
+                    {item.value}
+                  </span>
+                </a>
+              ) : (
+                <>
+                  <span className="text-text-tertiary group-hover:text-accent transition-colors">
+                    {item.icon}
+                  </span>
+                  <span className="text-xs font-mono text-text-tertiary uppercase tracking-wider">
+                    {item.label}
+                  </span>
+                  <span className="text-sm font-medium text-text-primary break-all">
+                    {item.value}
+                  </span>
+                </>
+              )}
+            </motion.div>
           ))}
         </div>
 

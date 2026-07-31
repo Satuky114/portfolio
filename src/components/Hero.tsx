@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowDown, Mail, Play } from "lucide-react";
+import { ArrowDown, Mail, Play, FileText } from "lucide-react";
 import { useI18n } from "@/app/[locale]/ClientIntlProvider";
 import { GlowOrb } from "@/components/ui/GlowOrb";
 import { GeometricFrame } from "@/components/ui/GeometricFrame";
@@ -69,7 +69,7 @@ export function Hero() {
                 200<span className="text-sm text-text-tertiary">万+</span>
               </span>
               <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-text-tertiary">
-                {locale === "zh" ? "累计传播量" : "Total Reach"}
+                {locale === "zh" ? "团队累计传播量" : "Team Total Reach"}
               </span>
             </motion.div>
           </div>
@@ -86,7 +86,7 @@ export function Hero() {
           >
             <GeometricFrame size={36} />
             <p className="font-mono text-xs md:text-sm text-text-tertiary tracking-[0.2em] uppercase">
-              {locale === "zh" ? "AI 内容创作者 · 成都" : "AI Content Creator · Chengdu"}
+              {locale === "zh" ? "西南民族大学 · 网络与新媒体" : "SW Minzu Univ. · Network & New Media"}
             </p>
           </motion.div>
 
@@ -147,15 +147,23 @@ export function Hero() {
             className="flex items-center gap-4 flex-wrap justify-center md:justify-start"
           >
             <a
+              href={asset("/resume.pdf")}
+              download
+              className="inline-flex items-center gap-2.5 px-6 py-3.5 bg-accent hover:bg-accent/90 text-bg-primary font-semibold rounded-xl transition-all hover:shadow-[0_0_50px_var(--accent-glow)]"
+            >
+              <FileText size={16} />
+              {locale === "zh" ? "下载简历" : "Download CV"}
+            </a>
+            <a
               href="#projects"
               onClick={(e) => {
                 e.preventDefault();
                 document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="inline-flex items-center gap-2.5 px-6 py-3.5 bg-accent hover:bg-accent/90 text-bg-primary font-semibold rounded-xl transition-all hover:shadow-[0_0_50px_var(--accent-glow)]"
+              className="inline-flex items-center gap-2.5 px-6 py-3.5 border border-border hover:border-text-secondary text-text-secondary hover:text-text-primary font-medium rounded-xl transition-all bg-bg-surface/40"
             >
               <Play size={16} />
-              {locale === "zh" ? "看我的作品" : "See My Work"}
+              {locale === "zh" ? "看作品" : "View Work"}
             </a>
             <a
               href="#contact"
@@ -166,7 +174,7 @@ export function Hero() {
               className="inline-flex items-center gap-2.5 px-6 py-3.5 border border-border hover:border-text-secondary text-text-secondary hover:text-text-primary font-medium rounded-xl transition-all bg-bg-surface/40"
             >
               <Mail size={16} />
-              {locale === "zh" ? "联系我" : "Contact Me"}
+              {locale === "zh" ? "联系我" : "Contact"}
             </a>
           </motion.div>
         </div>

@@ -11,7 +11,7 @@
     "greeting": "Hi，我是",
     "name": "罗政皓",
     "title1": "AI内容运营",
-    "title2": "AIGC创作者",
+    "title2": "双语主播",
     "subtitle": "用AI赋予内容生命力，让技术与创意在每一次传播中完美融合",
     "cta": "了解更多",
     "cta2": "联系我"
@@ -51,14 +51,14 @@
       "tags": ["摄影", "构图", "校园大赛", "视觉表达"]
     },
     "daka": {
-      "title": "民大自动打卡系统",
-      "description": "针对西南民族大学校园打卡系统，独立完成从逆向分析到自动化部署的全链路工程实践。通过Playwright浏览器自动化 + GitHub Actions定时调度，绕过校园WAF防火墙，实现CAS统一身份认证登录、AES-CBC密码加密、GPS模拟定位，最终实现完全无人值守的每日自动打卡。历经14个版本迭代，攻克WAF检测绕过、CAS OAuth2.0协议适配、Vue.js SPA导航解析、服务端时间窗口校验等关键技术难题。",
-      "tags": ["Playwright", "CAS OAuth2.0", "WAF Bypass", "AES-CBC", "GitHub Actions"]
+      "title": "民大校园自动化工具",
+      "description": "针对西南民族大学校园打卡系统，独立完成从需求分析到自动化部署的全链路工程实践。通过Playwright浏览器自动化与GitHub Actions定时调度，适配校园网络环境与CAS统一身份认证，实现每日定时自动签到。历经14个版本迭代，解决CAS OAuth2.0协议适配、Vue.js SPA页面解析、服务端时间窗口校验等关键技术问题。",
+      "tags": ["Playwright", "CAS OAuth2.0", "自动化运维", "AES-CBC", "GitHub Actions"]
     }
   },
   "content": {
     "title": "内容创作",
-    "subtitle": "25部作品 · 人民网等主流媒体转载 · 累计200万+传播量",
+    "subtitle": "道中华工作室 · 25部作品获人民网等转载 · 团队累计200万+传播",
     "daozhonghua": {
       "title": "道中华工作室",
       "role": "双语主播 / 内容创作者",
@@ -101,6 +101,7 @@
     "title": "联系我",
     "email": "邮箱",
     "phone": "电话",
+    "wechat": "微信",
     "github": "GitHub",
     "wechat": "微信",
     "downloadResume": "下载简历 PDF"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useI18n } from "@/app/[locale]/ClientIntlProvider";
-import { Smartphone, Video, Camera, Globe } from "lucide-react";
+import { Smartphone, Video, Globe } from "lucide-react";
 
 const SOCIAL_LINKS = [
   {
@@ -13,11 +13,6 @@ const SOCIAL_LINKS = [
     icon: <Smartphone size={18} />,
     label: "抖音",
     href: "https://v.douyin.com/7ijCop_yudg/",
-  },
-  {
-    icon: <Camera size={18} />,
-    label: "B站",
-    href: "#",
   },
   {
     icon: <Globe size={18} />,

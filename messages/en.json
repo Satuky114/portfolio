@@ -11,7 +11,7 @@
     "greeting": "Hi, I'm",
     "name": "Luo Zhenghao",
     "title1": "AI Content Operations",
-    "title2": "AIGC Creator",
+    "title2": "Bilingual Anchor",
     "subtitle": "Empowering content with AI — where technology and creativity converge in every story",
     "cta": "Learn More",
     "cta2": "Contact Me"
@@ -51,9 +51,9 @@
       "tags": ["Photography", "Composition", "Campus Award", "Visual Art"]
     },
     "daka": {
-      "title": "SWUN Auto Check-in System",
-      "description": "A fully automated daily check-in system for Southwest Minzu University, built from reverse engineering to automated deployment. Using Playwright browser automation with GitHub Actions cron scheduling, it bypasses the campus WAF firewall, handles CAS OAuth2.0 authentication, AES-CBC password encryption, and GPS location spoofing — achieving completely unattended daily check-in. Through 14 version iterations, key challenges solved include WAF detection bypass, CAS OAuth2.0 protocol adaptation, Vue.js SPA navigation parsing, and server-side time-window validation.",
-      "tags": ["Playwright", "CAS OAuth2.0", "WAF Bypass", "AES-CBC", "GitHub Actions"]
+      "title": "SWUN Campus Automation Tool",
+      "description": "An automated daily check-in system for Southwest Minzu University, built end-to-end from requirements analysis to deployment. Uses Playwright browser automation with GitHub Actions cron scheduling, adapting to campus network environment and CAS OAuth2.0 authentication for reliable unattended daily operation. Through 14 version iterations, solved challenges including CAS OAuth2.0 protocol adaptation, Vue.js SPA page parsing, and server-side time-window validation.",
+      "tags": ["Playwright", "CAS OAuth2.0", "Ops Automation", "AES-CBC", "GitHub Actions"]
     }
   },
   "content": {
@@ -101,6 +101,7 @@
     "title": "Get in Touch",
     "email": "Email",
     "phone": "Phone",
+    "wechat": "WeChat",
     "github": "GitHub",
     "wechat": "WeChat",
     "downloadResume": "Download Resume PDF"

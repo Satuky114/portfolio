@@ -20,15 +20,15 @@ const STATS = [
   {
     value: 117,
     suffix: "K+",
-    labelZh: "单条最高浏览",
-    labelEn: "Max Single Views",
+    labelZh: "单条最高浏览（团队）",
+    labelEn: "Max Views (Team)",
     icon: <Eye size={20} />,
   },
   {
     value: 200,
     suffix: "万+",
-    labelZh: "累计传播量",
-    labelEn: "Total Reach",
+    labelZh: "累计传播量（团队）",
+    labelEn: "Total Reach (Team)",
     icon: <Newspaper size={20} />,
   },
 ];

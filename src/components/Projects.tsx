@@ -68,8 +68,8 @@ const PROJECTS: ProjectItem[] = [
     highlights: null,
     stats: [
       { value: "贡嘎杯", zh: "省级超级联赛", en: "Provincial League" },
-      { value: "5K+", zh: "点赞", en: "Likes" },
-      { value: "8万+", zh: "浏览量", en: "Views" },
+      { value: "5K+", zh: "抖音点赞", en: "Douyin Likes" },
+      { value: "8万+", zh: "抖音浏览", en: "Douyin Views" },
     ],
     portrait: true,
   },
