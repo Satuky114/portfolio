@@ -81,7 +81,7 @@ const PROJECTS: ProjectItem[] = [
     accentVar: "var(--accent)",
     highlights: null,
     stats: [
-      { value: "二等奖", zh: "校摄影大赛", en: "2nd Prize" },
+      { value: "三等奖", zh: "校摄影大赛", en: "3rd Prize" },
       { value: "捕捉", zh: "光影与瞬间", en: "Light & Moments" },
     ],
     portrait: true,
