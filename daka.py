@@ -103,55 +103,66 @@ def do_cas_login(page):
             log("ddddocr not installed")
             return False, "ocr library missing"
 
-        # Debug: dump ALL img elements and captcha-related DOM
-        debug_html = page.evaluate("""(function() {
+        # First, we must make the captcha <img> visible.
+        # CAS generates a fresh captcha on page load — we need to trigger it.
+        page.evaluate("""(function() {
+            // Click the captcha refresh element to generate the captcha image
+            var refresh = document.querySelector('#captchaImg, img[id*="captcha"], img[src*="captcha"], [onclick*="captcha"], [onclick*="Captcha"]');
+            if (refresh) { refresh.click(); return 'clicked_captcha_img'; }
+            // Try clicking common refresh links
+            var links = document.querySelectorAll('a');
+            for (var i = 0; i < links.length; i++) {
+                if ((links[i].onclick && links[i].onclick.toString().includes('captcha')) ||
+                    links[i].innerText.includes('换') || links[i].innerText.includes('刷新')) {
+                    links[i].click(); return 'clicked_refresh_link';
+                }
+            }
+            // Try the captcha icon img[8] which was captcha1.png (40x40)
             var imgs = document.querySelectorAll('img');
-            var info = [];
-            imgs.forEach(function(img, i) {
-                info.push('img['+i+'] id='+img.id+' class='+img.className+' src='+(img.src||'').substring(0,100)+' size='+img.naturalWidth+'x'+img.naturalHeight);
-            });
-            return {imgs: info};
+            for (var j = 0; j < imgs.length; j++) {
+                var src = imgs[j].src || '';
+                if (src.includes('captcha')) { imgs[j].click(); return 'clicked_captcha_icon_' + j; }
+            }
+            return 'no_refresh_found';
         })()""")
-        log(f"DOM dump — imgs: {debug_html.get('imgs')}")
 
-        # Capture just the captcha image using Playwright's locator (sync API)
+        # Wait for the captcha image to load
+        page.wait_for_timeout(3000)
+
+        # Now try to capture the captcha image
         captcha_bytes = None
+
+        # img[8] was captcha1.png icon — clicking it should refresh #captchaImg
+        # img[9] is #captchaImg but size=0x0 initially — needs click to load
         captcha_selectors = [
             "#captchaImg",
             "img[id*='captcha']",
             "img[id*='Captcha']",
             'img[src*="captcha"]',
-            'img[src*="Captcha"]',
-            ".captcha_img",
-            '*[class*="captcha"] img',
         ]
+
         for sel in captcha_selectors:
             try:
                 el = page.locator(sel).first
                 if el.count() > 0:
-                    captcha_bytes = el.screenshot(timeout=3000)
+                    # Check if the image actually loaded
+                    is_loaded = page.evaluate(f"""(function() {{
+                        var img = document.querySelector('{sel}');
+                        return img && img.naturalWidth > 0 && img.naturalHeight > 0;
+                    }})()""")
+                    if not is_loaded:
+                        log(f"'{sel}' found but not loaded (size=0x0), skipping")
+                        continue
+                    captcha_bytes = el.screenshot(timeout=5000)
                     log(f"Captured captcha via '{sel}' ({len(captcha_bytes)} bytes)")
                     break
-            except Exception:
+            except Exception as e:
+                log(f"'{sel}' failed: {e}")
                 continue
 
         if not captcha_bytes:
-            # Fallback: find container near captcha input, screenshot that
-            try:
-                # Try finding parent container of captcha input
-                container_sel = page.evaluate("""(function() {
-                    var inp = document.querySelector('#captcha, [name="captcha"]');
-                    if (!inp) return null;
-                    var row = inp.closest('.form-group, .input-group, .row, .captcha-row, tr, .captcha-wrapper');
-                    if (row) return '#' + row.id || row.className.split(' ')[0] || '';
-                    return null;
-                })()""")
-                if container_sel:
-                    captcha_bytes = page.locator(container_sel).screenshot(timeout=3000)
-                else:
-                    captcha_bytes = page.screenshot(full_page=False)
-            except Exception:
-                captcha_bytes = page.screenshot(full_page=False)
+            # Last resort: full page screenshot
+            captcha_bytes = page.screenshot(full_page=False)
 
         if captcha_bytes:
             with open("daka_captcha_raw.png", "wb") as f:
