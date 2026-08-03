@@ -103,18 +103,32 @@ def do_cas_login(page):
             log("ddddocr not installed")
             return False, "ocr library missing"
 
-        # Capture just the captcha image using Playwright's locator
+        # Debug: dump ALL img elements and captcha-related DOM
+        debug_html = page.evaluate("""(function() {
+            var imgs = document.querySelectorAll('img');
+            var info = [];
+            imgs.forEach(function(img, i) {
+                info.push('img['+i+'] id='+img.id+' class='+img.className+' src='+(img.src||'').substring(0,100)+' size='+img.naturalWidth+'x'+img.naturalHeight);
+            });
+            return {imgs: info};
+        })()""")
+        log(f"DOM dump — imgs: {debug_html.get('imgs')}")
+
+        # Capture just the captcha image using Playwright's locator (sync API)
         captcha_bytes = None
         captcha_selectors = [
             "#captchaImg",
+            "img[id*='captcha']",
+            "img[id*='Captcha']",
             'img[src*="captcha"]',
-            ".captchaImg",
-            "img.captcha",
+            'img[src*="Captcha"]',
+            ".captcha_img",
+            '*[class*="captcha"] img',
         ]
         for sel in captcha_selectors:
             try:
                 el = page.locator(sel).first
-                if el and el.is_visible():
+                if el.count() > 0:
                     captcha_bytes = el.screenshot(timeout=3000)
                     log(f"Captured captcha via '{sel}' ({len(captcha_bytes)} bytes)")
                     break
@@ -122,29 +136,40 @@ def do_cas_login(page):
                 continue
 
         if not captcha_bytes:
-            # Fallback: find any img near the captcha input
+            # Fallback: find container near captcha input, screenshot that
             try:
-                inp_box = page.locator('#captcha, [name="captcha"]').first.bounding_box()
-                # Take a viewport screenshot and let ddddocr try
-                captcha_bytes = page.screenshot(full_page=False)
-                log(f"Captcha img not found — using full viewport screenshot ({len(captcha_bytes)} bytes)")
+                # Try finding parent container of captcha input
+                container_sel = page.evaluate("""(function() {
+                    var inp = document.querySelector('#captcha, [name="captcha"]');
+                    if (!inp) return null;
+                    var row = inp.closest('.form-group, .input-group, .row, .captcha-row, tr, .captcha-wrapper');
+                    if (row) return '#' + row.id || row.className.split(' ')[0] || '';
+                    return null;
+                })()""")
+                if container_sel:
+                    captcha_bytes = page.locator(container_sel).screenshot(timeout=3000)
+                else:
+                    captcha_bytes = page.screenshot(full_page=False)
             except Exception:
                 captcha_bytes = page.screenshot(full_page=False)
 
-        ocr = ddddocr.DdddOcr(show_ad=False)
-        code = (ocr.classification(captcha_bytes) or "").strip().lower()
-        log(f"OCR: '{code}'")
-
-        if code and len(code) >= 4:
-            captcha_input_id = captcha_info.get("id") or "captcha"
-            page.fill(f"#{captcha_input_id}", code)
-            log(f"Filled captcha: {code}")
-        else:
-            log(f"OCR unreliable (len={len(code)}): '{code}'")
-            # Save for debugging
+        if captcha_bytes:
             with open("daka_captcha_raw.png", "wb") as f:
                 f.write(captcha_bytes)
-            return False, f"OCR unreliable: '{code}'"
+            ocr = ddddocr.DdddOcr(show_ad=False)
+            code = (ocr.classification(captcha_bytes) or "").strip().lower()
+            log(f"OCR: '{code}'")
+
+            if code and len(code) >= 4:
+                captcha_input_id = captcha_info.get("id") or "captcha"
+                page.fill(f"#{captcha_input_id}", code)
+                log(f"Filled captcha: {code}")
+            else:
+                log(f"OCR unreliable (len={len(code)}): '{code}'")
+                return False, f"OCR unreliable: '{code}'"
+        else:
+            log("No captcha image found at all")
+            return False, "no captcha image"
 
     page.fill("#username", USERNAME)
     page.fill("#password", PASSWORD)
