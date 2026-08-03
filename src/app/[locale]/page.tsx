@@ -4,6 +4,7 @@ import { Hero } from "@/components/Hero";
 import { About } from "@/components/About";
 import { Projects } from "@/components/Projects";
 import { ContentCreation } from "@/components/ContentCreation";
+import { Portfolio } from "@/components/Portfolio";
 import { Skills } from "@/components/Skills";
 import { Experience } from "@/components/Experience";
 import { Contact } from "@/components/Contact";
@@ -23,6 +24,7 @@ export default function HomePage() {
         <Projects />
       </div>
       <ContentCreation />
+      <Portfolio />
       <div className="section-alt">
         <Skills />
       </div>

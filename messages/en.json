@@ -3,6 +3,7 @@
     "about": "About",
     "projects": "AI Projects",
     "content": "Content",
+    "portfolio": "Works",
     "skills": "Skills",
     "experience": "Experience",
     "contact": "Contact"
@@ -66,6 +67,27 @@
       "description": "Short-form video series focusing on Bashu culture and ethnic cultural communication. Served as bilingual anchor and content creator, using ChatGPT for topic planning and script optimization, with Canva and CapCut for visual design and editing.",
       "highlights": ["25 Original Works", "Featured on People's Daily", "Featured on China News Network", "117K+ Single Video Views"]
     }
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "subtitle": "From WeChat long-form to AIGC video — a working archive, still developing.",
+    "sheetLabel": "Contact Sheet",
+    "framesUnit": "Frames",
+    "longform": {
+      "process": "Darkroom · Safelight",
+      "label": "WeChat Long-form",
+      "description": "Vertical long-form graphics designed for WeChat Official Account posts — each frame is one article's visual."
+    },
+    "video": {
+      "process": "Cyanotype",
+      "label": "AIGC Video",
+      "description": "AI-generated short films — the reel is in the developer, new cuts loading."
+    },
+    "unexposedLabel": "Unexposed",
+    "unexposedNote": "Pending",
+    "developingLabel": "Developing",
+    "developedLabel": "Live",
+    "srNote": "This gallery is being populated with new works."
   },
   "skills": {
     "title": "Skills & Tools",

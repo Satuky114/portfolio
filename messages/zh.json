@@ -3,6 +3,7 @@
     "about": "关于我",
     "projects": "AI项目",
     "content": "内容创作",
+    "portfolio": "作品",
     "skills": "技能",
     "experience": "经历",
     "contact": "联系"
@@ -52,7 +53,7 @@
     },
     "daka": {
       "title": "民大校园自动化工具",
-      "description": "针对西南民族大学校园打卡系统，独立完成从需求分析到自动化部署的全链路工程实践。通过Playwright浏览器自动化与GitHub Actions定时调度，适配校园网络环境与CAS统一身份认证，实现每日定时自动签到。历经14个版本迭代，解决CAS OAuth2.0协议适配、Vue.js SPA页面解析、服务端时间窗口校验等关键技术问题。",
+      "description": "针对西南民族大学校园打卡系统，独立完成从需求分析到自动化部署的全链路工程实践。通过Playwright浏览器自动化与GitHub Actions定时调度，适配校园网络环境与CAS统一身份认证，实现每日定时自动签到。历经18个版本迭代，解决CAS OAuth2.0协议适配、Cookie跨天持久化、CAS REST API旁路验证码、Vue.js SPA页面解析、服务端时间窗口校验等关键技术问题。",
       "tags": ["Playwright", "CAS OAuth2.0", "自动化运维", "AES-CBC", "GitHub Actions"]
     }
   },
@@ -66,6 +67,27 @@
       "description": "聚焦巴蜀文化、民族文化对外传播的系列短视频项目。担任双语主播及内容创作者，使用ChatGPT辅助选题策划与脚本优化，借助Canva、剪映完成视觉设计与剪辑。",
       "highlights": ["25部作品创作", "人民网转载", "中国新闻网转载", "单条最高11.7万浏览"]
     }
+  },
+  "portfolio": {
+    "title": "作品集",
+    "subtitle": "从公众号长图到AIGC视频——一份持续曝光中的成品档案。",
+    "sheetLabel": "接触印样",
+    "framesUnit": "格",
+    "longform": {
+      "process": "暗房 · Safelight",
+      "label": "公众号长图",
+      "description": "为公众号策划与设计的竖版长图，每一格即一篇推文的视觉。"
+    },
+    "video": {
+      "process": "铁盐 · Cyanotype",
+      "label": "AIGC视频",
+      "description": "由AI生成的短片，胶卷待冲洗、成片陆续上卷。"
+    },
+    "unexposedLabel": "未曝光",
+    "unexposedNote": "待冲洗",
+    "developingLabel": "冲洗中",
+    "developedLabel": "已上架",
+    "srNote": "本展区作品持续更新中。"
   },
   "skills": {
     "title": "技能与工具",

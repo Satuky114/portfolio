@@ -10,6 +10,7 @@ const SECTIONS = [
   { id: "about", key: "nav.about" },
   { id: "projects", key: "nav.projects" },
   { id: "content", key: "nav.content" },
+  { id: "portfolio", key: "nav.portfolio" },
   { id: "skills", key: "nav.skills" },
   { id: "experience", key: "nav.experience" },
   { id: "contact", key: "nav.contact" },
