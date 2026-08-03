@@ -1,19 +1,17 @@
 """
-民大自动打卡 v15 - 可靠等待版
+民大自动打卡 v16 - 登录修复版
 =============================
+v16 变更:
+- do_cas_login() 返回 (success, reason), 调用方必须检查
+- 登录失败 → 立即中止, 不再继续跑到打卡页
+- CAS 错误消息检测 + 截图（daka_cas_result.png）
+- 验证码检测（daka_captcha.png）
+- 修复 7/31-8/2 连续三天登录失败未被检测到的 bug
+
 v15 变更:
 - 重写 find_and_click_clock(): 4阶段等待机制
-  Phase 1: 等 SPA 渲染（Page: 0 chars → 等 DOM 挂载，最多30s）
-  Phase 2: 等 queryPersonDetailInfo API 返回（最多3min）
-  Phase 3: 点击打卡按钮
-  Phase 4: 等打卡结果 toast（最多30s, 循环检测"成功"/"已打卡"/"失败"）
-- 所有等待超时 → return False（标记失败）, 不再误判成功
-- 解决昨晚 bug: Page:0 chars + API 超时 → 强行点击 → 误报成功
-
-v14 变更:
-- 非窗口时间改轮询等待（应对 GitHub Actions cron 延迟）
-- 多重时间校验：登陆后、点击打卡前再次检查窗口
-- --force 跳过所有时间检查
+  Phase 1: 等 SPA 渲染, Phase 2: 等 API, Phase 3: 点击, Phase 4: 等结果
+- 所有等待超时 → return False, 不再误判成功
 """
 import os, sys, time, json, traceback
 from datetime import datetime, timezone, timedelta
@@ -82,19 +80,55 @@ def load_cookies(context):
 
 
 def do_cas_login(page):
-    page.click("#userNameLogin_a")
+    """Returns (success, error_reason)."""
+    try:
+        page.click("#userNameLogin_a")
+    except Exception:
+        return False, "userNameLogin_a button not found"
+
     page.wait_for_timeout(2000)
+
+    # Check for captcha
+    captcha = page.evaluate("""(function() {
+        var c = document.querySelector('#captcha, #randCode, [name="captcha"], [name="randCode"]');
+        if (c) return {found: true, id: c.id, name: c.name};
+        var imgs = document.querySelectorAll('img');
+        for (var i of imgs) { if (i.src && i.src.includes('captcha')) return {found: true, img: i.src}; }
+        return {found: false};
+    })()""")
+    if captcha.get("found"):
+        log(f"CAPTCHA DETECTED: {captcha}")
+        page.screenshot(path="daka_captcha.png")
+        return False, "captcha required"
+
     page.fill("#username", USERNAME)
     page.fill("#password", PASSWORD)
     salt = page.evaluate("(document.getElementById('pwdEncryptSalt')||{}).value") or "rjBFAaHsNkKAhpoi"
+    log(f"Encrypt salt: {salt[:20]}...")
+
     encrypted = page.evaluate(f"""encryptPassword(document.getElementById('password').value, "{salt}")""")
     page.evaluate(f"""document.getElementById('password').value = "{encrypted}"; document.getElementById('saltPassword').value = "{encrypted}";""")
+
     log("Submitting CAS form...")
     page.screenshot(path="daka_cas.png")
     page.evaluate("document.querySelector('form').submit()")
     page.wait_for_timeout(10000)
-    log(f"After CAS: {page.url[:120]}")
-    return "wxweb" in page.url or "appcas" in page.url
+
+    url = page.url
+    log(f"After CAS: {url[:120]}")
+    page.screenshot(path="daka_cas_result.png")
+
+    # If we're still on the authserver login page — login failed
+    if "authserver" in url and "login" in url:
+        # Try to read the error message
+        error_text = page.evaluate("""(function() {
+            var e = document.querySelector('.error, .msg, .alert, [id*="error"], [id*="msg"]');
+            return e ? e.innerText || e.textContent : '';
+        })()""")
+        log(f"CAS ERROR: {error_text[:200] if error_text else 'no error message found'}")
+        return False, f"CAS rejected: {error_text[:100] if error_text else 'unknown'}"
+
+    return ("wxweb" in url or "appcas" in url), None
 
 
 def find_and_click_clock(page):
@@ -234,7 +268,7 @@ def do_checkin(headless=True, force=False):
         log(f"WARNING: {window_status()} — API calls may fail (code 500).")
 
     log("=" * 60)
-    log(f"v15 - Starting check-in at {now.strftime('%Y-%m-%d %H:%M:%S')} BJT")
+    log(f"v16 - Starting check-in at {now.strftime('%Y-%m-%d %H:%M:%S')} BJT")
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -278,13 +312,21 @@ def do_checkin(headless=True, force=False):
                         page.wait_for_url("**/authserver.swun.edu.cn/**", timeout=20000)
                     except PT:
                         pass
-                do_cas_login(page)
+
+                ok, reason = do_cas_login(page)
+                if not ok:
+                    log(f"FATAL: CAS login failed — {reason}")
+                    return False
+
                 try:
                     page.wait_for_url("**/wxweb/**", timeout=30000)
                 except PT:
                     pass
-            else:
+            elif "wxweb" in page.url:
                 log("=> Already logged in (cookie)")
+            else:
+                log(f"Unknown login state: {page.url[:120]}")
+                page.screenshot(path="daka_unknown.png")
 
             save_cookies(context)
 
@@ -328,7 +370,7 @@ def do_checkin(headless=True, force=False):
 
 def main():
     import argparse
-    ap = argparse.ArgumentParser(description="民大自动打卡 v15")
+    ap = argparse.ArgumentParser(description="民大自动打卡 v16")
     ap.add_argument("-m", "--manual", action="store_true", help="Non-headless, interactive")
     ap.add_argument("--show", action="store_true", help="Show browser window")
     ap.add_argument("--force", action="store_true", help="Skip time window check")
