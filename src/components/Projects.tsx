@@ -93,12 +93,12 @@ const PROJECTS: ProjectItem[] = [
     link: {
       labelZh: "GitHub 开源",
       labelEn: "GitHub (Open Source)",
-      href: "https://github.com/satuky114/luo-zhenghao-portfolio",
+      href: "https://github.com/satuky114/luo-zhenghao-portfolio/blob/main/daka.py",
     },
     accentVar: "var(--accent2)",
     highlights: null,
     stats: [
-      { value: "v14", zh: "版本迭代", en: "Iterations" },
+      { value: "v18", zh: "版本迭代", en: "Iterations" },
       { value: "100%", zh: "无人值守", en: "Unattended" },
       { value: "21:30", zh: "每日自动", en: "Daily Auto" },
     ],

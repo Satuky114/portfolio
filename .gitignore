@@ -36,6 +36,7 @@ yarn-error.log*
 # 打卡脚本 - 不要提交登录凭证
 browser_data/
 daka*.png
+swun_cookies*.json
 swun_cookies_base64.txt
 __pycache__/
 *.pyc

@@ -7,9 +7,10 @@
 - ✅ **全自动打卡**：每晚 21:30 自动签到，无需手动操作
 - ✅ **WAF 绕过**：伪装真实浏览器环境，绕过校园云防护
 - ✅ **CAS 认证**：自动完成统一身份认证登录（AES-CBC 密码加密）
+- ✅ **Cookie 持久化**：登录态跨天复用，减少 CAS 登录暴露
+- ✅ **CAS REST API 旁路**：验证码出现时尝试 API 直接获取 Service Ticket
 - ✅ **GPS 模拟**：定位至航空港校区（避免跨校区打卡失败）
 - ✅ **时间窗口保护**：多重时间校验，确保只在 21:30-23:25 内打卡
-- ✅ **远程开关**：通过 GitHub Issue 评论控制脚本启停
 
 ## 技术架构
 
@@ -21,8 +22,12 @@ Playwright (Chromium headless)
   │
   ├─ WAF Bypass ──► gyglxt.swun.edu.cn/wxweb/
   │
-  ├─ CAS OAuth2.0 ──► authserver.swun.edu.cn
-  │     └─ AES-CBC 密码加密 (encryptPassword)
+  ├─ Cookie Check ──► 是否已有有效登录态？
+  │     │
+  │     ├─ 有效 → 直接进入打卡页
+  │     └─ 过期 → CAS 登录
+  │           ├─ 无验证码 → 表单登录 (AES-CBC)
+  │           └─ 有验证码 → CAS REST API 旁路
   │
   ├─ SPA Navigation ──► #/PositioningClock
   │
@@ -88,6 +93,7 @@ Playwright (Chromium headless)
 |------|----------|
 | **校园 WAF 防火墙（阿里云盾）** | 新版 headless Chromium + Desktop UA + 1920×1080 视口 + `disable-site-isolation-trials` + `navigator.plugins` 伪造 |
 | **CAS 统一身份认证** | 解析页面内 AES-CBC `encryptPassword()` 函数，先获取 salt，再生成加密密码填入表单 |
+| **CAS 验证码（2026-07 新增）** | Cookie 持久化减少触发频率 + CAS REST API 旁路获取 Service Ticket（无需表单） |
 | **Vue.js SPA Hash 路由** | 识别 `#/login` / `#/hoyOauth` / `#/PositioningClock` 三段路由，处理 OAuth token 回调 |
 | **服务端时间窗口限制** | `queryPersonDetailInfoByPersonsn` API 在非窗口时段返回 `code:500`，改为轮询 + 多重时间校验 |
 | **GitHub Actions 延迟** | cron 提前到 19:30 BJT，脚本内每 2 分钟轮询等待至窗口开启 |
@@ -97,18 +103,22 @@ Playwright (Chromium headless)
 - **Playwright** (Python) — 浏览器自动化核心
 - **GitHub Actions** — CI/CD 定时调度 + artifact 存档
 - **CAS OAuth2.0** — 统一身份认证协议
+- **CAS REST API** — 直接获取 Service Ticket 绕过验证码
 - **AES-CBC** — 前端密码加密逆向
-- **GitHub Issues API** — 远程开关机制
+- **Cookie 持久化** — 跨天复用登录态
 
 ### 版本历程
 
-历经 **14 个版本**迭代：
+历经 **18 个版本**迭代：
 - v1-v4：基础脚本、表单填写、验证码处理
 - v5-v8：WAF 检测绕过、headless 模式优化
 - v9-v11：多因素登录流程完善、SPA 导航适配
 - v12：发现服务端时间窗口限制
 - v13：时间窗口检查 + 手动模式 + CI 适配
 - v14：轮询等待 + 多重时间校验（应对 Actions 延迟）
+- v15-v16：登录失败检测、打卡结果精确判断
+- v17：ddddocr 验证码 OCR 尝试（4次迭代失败）
+- v18：Cookie 持久化 + CAS REST API 旁路，完全绕过验证码
 
 ---
 

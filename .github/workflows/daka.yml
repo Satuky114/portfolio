@@ -24,9 +24,19 @@ jobs:
         with:
           python-version: '3.12'
 
-      - run: pip install playwright ddddocr
+      - run: pip install playwright
 
       - run: playwright install chromium --with-deps
+
+      # 复用上次运行的登录 Cookie，避免每次重新登录（减少验证码触发）
+      - name: 恢复登录态 Cookie
+        id: cookie-cache
+        uses: actions/cache@v4
+        with:
+          path: swun_cookies.json
+          key: swun-cookies-${{ secrets.SWUN_USERNAME }}
+          restore-keys: |
+            swun-cookies-
 
       - name: 执行打卡
         env:

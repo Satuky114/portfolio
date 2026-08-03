@@ -53,7 +53,7 @@
     },
     "daka": {
       "title": "SWUN Campus Automation Tool",
-      "description": "An automated daily check-in system for Southwest Minzu University, built end-to-end from requirements analysis to deployment. Uses Playwright browser automation with GitHub Actions cron scheduling, adapting to campus network environment and CAS OAuth2.0 authentication for reliable unattended daily operation. Through 14 version iterations, solved challenges including CAS OAuth2.0 protocol adaptation, Vue.js SPA page parsing, and server-side time-window validation.",
+      "description": "An automated daily check-in system for Southwest Minzu University, built end-to-end from requirements analysis to deployment. Uses Playwright browser automation with GitHub Actions cron scheduling, adapting to campus network environment and CAS OAuth2.0 authentication for reliable unattended daily operation. Through 18 version iterations, solved challenges including CAS OAuth2.0 protocol adaptation, Vue.js SPA page parsing, and server-side time-window validation.",
       "tags": ["Playwright", "CAS OAuth2.0", "Ops Automation", "AES-CBC", "GitHub Actions"]
     }
   },
