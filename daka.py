@@ -1,17 +1,14 @@
 """
-民大自动打卡 v16 - 登录修复版
+民大自动打卡 v17 - 验证码OCR版
 =============================
-v16 变更:
-- do_cas_login() 返回 (success, reason), 调用方必须检查
-- 登录失败 → 立即中止, 不再继续跑到打卡页
-- CAS 错误消息检测 + 截图（daka_cas_result.png）
-- 验证码检测（daka_captcha.png）
-- 修复 7/31-8/2 连续三天登录失败未被检测到的 bug
+v17 变更:
+- CAS 新增验证码, 使用 ddddocr 进行自动识别
+- 识别失败 → 截图 + 放弃, 不再误提交
+- 配合 GitHub Actions 安装 ddddocr
 
-v15 变更:
-- 重写 find_and_click_clock(): 4阶段等待机制
-  Phase 1: 等 SPA 渲染, Phase 2: 等 API, Phase 3: 点击, Phase 4: 等结果
-- 所有等待超时 → return False, 不再误判成功
+v16 变更:
+- do_cas_login() 返回 (success, reason)
+- 登录失败 → 立即中止
 """
 import os, sys, time, json, traceback
 from datetime import datetime, timezone, timedelta
@@ -88,18 +85,62 @@ def do_cas_login(page):
 
     page.wait_for_timeout(2000)
 
-    # Check for captcha
-    captcha = page.evaluate("""(function() {
+    # Check for captcha — CAS added this around 2026-07-31
+    captcha_info = page.evaluate("""(function() {
         var c = document.querySelector('#captcha, #randCode, [name="captcha"], [name="randCode"]');
-        if (c) return {found: true, id: c.id, name: c.name};
+        if (c) return {found: true, id: c.id || c.name, tag: c.tagName};
         var imgs = document.querySelectorAll('img');
         for (var i of imgs) { if (i.src && i.src.includes('captcha')) return {found: true, img: i.src}; }
         return {found: false};
     })()""")
-    if captcha.get("found"):
-        log(f"CAPTCHA DETECTED: {captcha}")
+
+    if captcha_info.get("found"):
+        log("Captcha detected — running OCR...")
+
+        try:
+            import ddddocr
+        except ImportError:
+            log("ddddocr not installed")
+            return False, "ocr library missing"
+
         page.screenshot(path="daka_captcha.png")
-        return False, "captcha required"
+
+        try:
+            captcha_b64 = page.evaluate("""(function() {
+                var img = document.querySelector('#captchaImg, img[id*="captcha"], img[src*="captcha"], .captcha img, img[class*="captcha"]');
+                if (!img) {
+                    var inp = document.querySelector('#captcha, [name="captcha"]');
+                    if (inp) { var imgs = inp.parentElement.querySelectorAll('img'); if (imgs.length) img = imgs[0]; }
+                }
+                if (!img) return null;
+                var canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                canvas.getContext('2d').drawImage(img, 0, 0);
+                return canvas.toDataURL('image/png').split(',')[1];
+            })()""")
+        except Exception:
+            captcha_b64 = None
+
+        code = ""
+        if captcha_b64:
+            import base64
+            img_bytes = base64.b64decode(captcha_b64)
+            ocr = ddddocr.DdddOcr(show_ad=False)
+            code = (ocr.classification(img_bytes) or "").strip().lower()
+            log(f"OCR: '{code}'")
+        else:
+            ocr = ddddocr.DdddOcr(show_ad=False)
+            code = (ocr.classification(page.screenshot()) or "").strip().lower()
+            log(f"OCR (full-page): '{code}'")
+
+        if code and len(code) >= 4:
+            captcha_input_id = captcha_info.get("id") or "captcha"
+            page.fill(f"#{captcha_input_id}", code)
+            log(f"Filled captcha: {code}")
+        else:
+            log(f"OCR result unreliable: '{code}'")
+            return False, "OCR unreliable"
 
     page.fill("#username", USERNAME)
     page.fill("#password", PASSWORD)
@@ -268,7 +309,7 @@ def do_checkin(headless=True, force=False):
         log(f"WARNING: {window_status()} — API calls may fail (code 500).")
 
     log("=" * 60)
-    log(f"v16 - Starting check-in at {now.strftime('%Y-%m-%d %H:%M:%S')} BJT")
+    log(f"v17 - Starting check-in at {now.strftime('%Y-%m-%d %H:%M:%S')} BJT")
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -370,7 +411,7 @@ def do_checkin(headless=True, force=False):
 
 def main():
     import argparse
-    ap = argparse.ArgumentParser(description="民大自动打卡 v16")
+    ap = argparse.ArgumentParser(description="民大自动打卡 v17")
     ap.add_argument("-m", "--manual", action="store_true", help="Non-headless, interactive")
     ap.add_argument("--show", action="store_true", help="Show browser window")
     ap.add_argument("--force", action="store_true", help="Skip time window check")
