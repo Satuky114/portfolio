@@ -103,44 +103,48 @@ def do_cas_login(page):
             log("ddddocr not installed")
             return False, "ocr library missing"
 
-        page.screenshot(path="daka_captcha.png")
+        # Capture just the captcha image using Playwright's locator
+        captcha_bytes = None
+        captcha_selectors = [
+            "#captchaImg",
+            'img[src*="captcha"]',
+            ".captchaImg",
+            "img.captcha",
+        ]
+        for sel in captcha_selectors:
+            try:
+                el = page.locator(sel).first
+                if el and el.is_visible():
+                    captcha_bytes = el.screenshot(timeout=3000)
+                    log(f"Captured captcha via '{sel}' ({len(captcha_bytes)} bytes)")
+                    break
+            except Exception:
+                continue
 
-        try:
-            captcha_b64 = page.evaluate("""(function() {
-                var img = document.querySelector('#captchaImg, img[id*="captcha"], img[src*="captcha"], .captcha img, img[class*="captcha"]');
-                if (!img) {
-                    var inp = document.querySelector('#captcha, [name="captcha"]');
-                    if (inp) { var imgs = inp.parentElement.querySelectorAll('img'); if (imgs.length) img = imgs[0]; }
-                }
-                if (!img) return null;
-                var canvas = document.createElement('canvas');
-                canvas.width = img.naturalWidth;
-                canvas.height = img.naturalHeight;
-                canvas.getContext('2d').drawImage(img, 0, 0);
-                return canvas.toDataURL('image/png').split(',')[1];
-            })()""")
-        except Exception:
-            captcha_b64 = None
+        if not captcha_bytes:
+            # Fallback: find any img near the captcha input
+            try:
+                inp_box = page.locator('#captcha, [name="captcha"]').first.bounding_box()
+                # Take a viewport screenshot and let ddddocr try
+                captcha_bytes = page.screenshot(full_page=False)
+                log(f"Captcha img not found — using full viewport screenshot ({len(captcha_bytes)} bytes)")
+            except Exception:
+                captcha_bytes = page.screenshot(full_page=False)
 
-        code = ""
-        if captcha_b64:
-            import base64
-            img_bytes = base64.b64decode(captcha_b64)
-            ocr = ddddocr.DdddOcr(show_ad=False)
-            code = (ocr.classification(img_bytes) or "").strip().lower()
-            log(f"OCR: '{code}'")
-        else:
-            ocr = ddddocr.DdddOcr(show_ad=False)
-            code = (ocr.classification(page.screenshot()) or "").strip().lower()
-            log(f"OCR (full-page): '{code}'")
+        ocr = ddddocr.DdddOcr(show_ad=False)
+        code = (ocr.classification(captcha_bytes) or "").strip().lower()
+        log(f"OCR: '{code}'")
 
         if code and len(code) >= 4:
             captcha_input_id = captcha_info.get("id") or "captcha"
             page.fill(f"#{captcha_input_id}", code)
             log(f"Filled captcha: {code}")
         else:
-            log(f"OCR result unreliable: '{code}'")
-            return False, "OCR unreliable"
+            log(f"OCR unreliable (len={len(code)}): '{code}'")
+            # Save for debugging
+            with open("daka_captcha_raw.png", "wb") as f:
+                f.write(captcha_bytes)
+            return False, f"OCR unreliable: '{code}'"
 
     page.fill("#username", USERNAME)
     page.fill("#password", PASSWORD)
