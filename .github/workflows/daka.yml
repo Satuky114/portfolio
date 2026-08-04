@@ -34,7 +34,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: swun_cookies.json
-          key: swun-cookies-${{ secrets.SWUN_USERNAME }}
+          key: swun-cookies-v1
           restore-keys: |
             swun-cookies-
 
