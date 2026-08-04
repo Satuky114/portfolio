@@ -250,7 +250,7 @@ def do_cas_login(page):
     return ("wxweb" in url or "appcas" in url), None
 
 
-def find_and_click_clock(page):
+def find_and_click_clock(page, force=False):
     """Locate and click the check-in circle. 4-phase wait."""
 
     # Phase 1: Wait for Vue SPA to render
@@ -272,30 +272,43 @@ def find_and_click_clock(page):
     log(f"Page: {len(body)} chars")
     page.screenshot(path="daka_clock.png", full_page=True)
 
-    if "已打卡" in body or "签到成功" in body:
+    if "已打卡" in body or "签到成功" in body or "已签到" in body:
         log("ALREADY CHECKED IN TODAY")
         return True
 
-    # Phase 2: Wait for queryPersonDetailInfo API (up to 3min)
-    for i in range(90):
-        toast_visible = page.evaluate("""
-            (function() {
-                var t = document.querySelector('.van-toast--loading, .van-loading');
-                if (t && window.getComputedStyle(t).display !== 'none') return true;
-                var tt = document.querySelector('.van-toast__text');
-                if (tt && (tt.textContent.includes('queryPerson') || tt.textContent.includes('\\u52a0\\u8f7d'))) return true;
-                return false;
-            })()
-        """)
-        if toast_visible:
-            if i == 0:
-                log("Waiting for queryPersonDetailInfo API (up to 3min)...")
-            page.wait_for_timeout(2000)
-        else:
-            log(f"API loaded ({i * 2}s)")
+    # Phase 2: Wait for the page to finish loading its data.
+    # The page shows a time window (e.g. "21:30:00" / "23:25:00") and a
+    # clock circle / button once queryPersonDetailInfo returns. The circle
+    # may have a different class than .position-circle, so we wait for
+    # ANY of: the circle element, the time-window text, or a sign-in state.
+    # Outside the check-in window the API never responds -> we skip.
+    if not force and not in_checkin_window():
+        log(f"{window_status()} — outside window, skipping wait/click")
+        return True
+
+    circle_selectors = [".position-circle", ".clock-btn", ".startClock",
+                        "[class*='clock'] [class*='btn']", ".ring",
+                        "[class*='position'] [class*='btn']"]
+    for i in range(90):  # up to 3 min
+        found_sel = None
+        for sel in circle_selectors:
+            if page.locator(sel).count() > 0:
+                found_sel = sel
+                break
+        # Also consider the page "loaded" once the time window text renders
+        body_now = page.locator("body").inner_text()
+        has_window = "21:30" in body_now or "23:25" in body_now or "至" in body_now
+        if found_sel or (has_window and i > 3):
+            if found_sel:
+                log(f"Clock element found ({found_sel}) after {i * 2}s")
+            else:
+                log(f"Page data loaded (time window visible) after {i * 2}s")
             break
+        if i == 0:
+            log("Waiting for page data (queryPersonDetailInfo API, up to 3min)...")
+        page.wait_for_timeout(2000)
     else:
-        log("FATAL: queryPersonDetailInfo API never completed (3min)")
+        log("FATAL: Page data never loaded (3min) — API didn't respond")
         page.screenshot(path="daka_error.png")
         return False
 
@@ -304,21 +317,35 @@ def find_and_click_clock(page):
         log("Aborting to avoid server rejection.")
         return True
 
-    # Phase 3: Click the circle
-    circle = page.locator(".position-circle")
-    if circle.count() == 0:
-        log("No .position-circle found")
+    # Phase 3: Click the circle/button.
+    # Try several known selectors; prefer a visible clickable element.
+    clicked = False
+    circle_selectors = [".position-circle", ".clock-btn", ".startClock",
+                        ".ring", "[class*='clock'] [class*='btn']"]
+    for sel in circle_selectors:
+        circle = page.locator(sel).first
+        if circle.count() > 0:
+            try:
+                circ_box = circle.bounding_box()
+                if circ_box:
+                    cx = circ_box['x'] + circ_box['width'] / 2
+                    cy = circ_box['y'] + circ_box['height'] / 2
+                    log(f"Clicking '{sel}' at ({cx:.0f}, {cy:.0f})")
+                    page.mouse.click(cx, cy)
+                    clicked = True
+                    break
+                else:
+                    circle.click()
+                    clicked = True
+                    break
+            except Exception as e:
+                log(f"Click '{sel}' failed: {e}")
+                continue
+
+    if not clicked:
+        log("No clickable clock button found")
         page.screenshot(path="daka_error.png")
         return False
-
-    circ_box = circle.first.bounding_box()
-    if circ_box:
-        cx = circ_box['x'] + circ_box['width'] / 2
-        cy = circ_box['y'] + circ_box['height'] / 2
-        log(f"Clicking at ({cx:.0f}, {cy:.0f})")
-        page.mouse.click(cx, cy)
-    else:
-        circle.first.click()
 
     # Phase 4: Wait for result (up to 30s)
     for i in range(15):
@@ -330,6 +357,7 @@ def find_and_click_clock(page):
                 return {toast: t ? t.textContent : '', dialog: d ? d.textContent : ''};
             })()
         """)
+        body_now = page.locator("body").inner_text()
         log(f"After click {i*2}s — Toast: {toast['toast'][:80]}, Dialog: {toast['dialog'][:80]}")
 
         if "成功" in toast['toast'] or "签到成功" in toast['toast']:
@@ -352,6 +380,10 @@ def find_and_click_clock(page):
         """)
         if still_loading:
             log("Server still processing, waiting...")
+        elif "已签到" in body_now or "签到成功" in body_now:
+            log("Page shows checked-in state")
+            page.screenshot(path="daka_done.png")
+            return True
 
     log("Result unclear after 30s — assuming success (check manually)")
     page.screenshot(path="daka_done.png")
@@ -460,10 +492,26 @@ def do_checkin(headless=True, force=False):
             save_cookies(context)
 
             # Step 3: OAuth handling
-            page.wait_for_timeout(3000)
+            # The hoyOauth page decodes sqcode -> token, stores it in
+            # localStorage, calls the menu API, then auto-redirects.
+            # We must let it finish; forcing a goto too early loses the token.
             if "hoyOauth" in page.url:
-                log("OAuth token processing (15s)...")
-                page.wait_for_timeout(15000)
+                log("OAuth in progress — waiting for auto-redirect (up to 60s)...")
+                oauth_done = False
+                for _ in range(60):
+                    page.wait_for_timeout(1000)
+                    if "hoyOauth" not in page.url:
+                        oauth_done = True
+                        break
+                    # Check if token got stored (a sign OAuth is progressing)
+                    tok = page.evaluate("localStorage.getItem('token')")
+                    if tok:
+                        log(f"token stored ({len(tok)} chars) — waiting for redirect...")
+                log(f"OAuth {'done' if oauth_done else 'still on hoyOauth'}, URL: {page.url[:90]}")
+
+            # Verify token exists before proceeding
+            token = page.evaluate("localStorage.getItem('token')")
+            log(f"Token in localStorage: {'yes (' + str(len(token)) + ' chars)' if token else 'MISSING'}")
 
             # Re-verify window
             if not force and not in_checkin_window():
@@ -480,7 +528,7 @@ def do_checkin(headless=True, force=False):
             log(f"Clock URL: {page.url[:120]}")
 
             # Step 5: Click
-            ok = find_and_click_clock(page)
+            ok = find_and_click_clock(page, force=force)
             return ok
 
         except PT as e:
@@ -492,6 +540,12 @@ def do_checkin(headless=True, force=False):
             page.screenshot(path="daka_error.png")
             return False
         finally:
+            # Always persist cookies (even partial) so the next run can reuse
+            # the wxweb/authserver session instead of re-logging in.
+            try:
+                save_cookies(context)
+            except Exception:
+                pass
             context.close()
             browser.close()
             log("Done")
